@@ -1,0 +1,19 @@
+diff --git a/main/main.c b/main/main.c
+index 3b82ae81..4936afc2 100644
+--- a/main/main.c
++++ b/main/main.c
+@@ -2300,6 +2300,14 @@ zend_result php_module_startup(sapi_module_struct *sf, zend_module_entry *additi
+ 	 */
+ 	php_ini_register_extensions();
+ 	zend_startup_modules();
++#ifdef __wasi__
++	/* GOPHPER: register the PHP functions the Go host provides, once the
++	 * extensions' functions are in, so that a clash reports which. */
++	{
++		extern void gophper_fn_register(void);
++		gophper_fn_register();
++	}
++#endif
+ 
+ 	/* start Zend extensions */
+ 	zend_startup_extensions();
