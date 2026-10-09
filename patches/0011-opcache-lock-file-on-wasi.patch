@@ -1,0 +1,19 @@
+diff --git a/ext/opcache/zend_shared_alloc.c b/ext/opcache/zend_shared_alloc.c
+index 3d6d2a84..ebd01140 100644
+--- a/ext/opcache/zend_shared_alloc.c
++++ b/ext/opcache/zend_shared_alloc.c
+@@ -127,6 +127,14 @@ void zend_shared_alloc_create_lock(char *lockfile_path)
+ 	fcntl(lock_file, F_SETFD, val);
+ 
+ 	unlink(lockfile_name);
++#ifdef __wasi__
++	/* GOPHPER: WASI has no record locks. The shared memory they guard never
++	 * leaves this instance, so compat lets every lock on this fd succeed. */
++	{
++		extern void gophper_fcntl_private_locks(int fd);
++		gophper_fcntl_private_locks(lock_file);
++	}
++#endif
+ }
+ #endif
+ 
