@@ -1,0 +1,19 @@
+diff --git a/ext/openssl/xp_ssl.c b/ext/openssl/xp_ssl.c
+index ad06af44..602363c2 100644
+--- a/ext/openssl/xp_ssl.c
++++ b/ext/openssl/xp_ssl.c
+@@ -3843,8 +3843,12 @@ static int php_openssl_sockop_set_option(php_stream *stream, int option, int val
+ 
+ 				case STREAM_XPORT_OP_LISTEN:
+ 					/* Do normal listen first */
+-					xparam->outputs.returncode = php_stream_socket_ops.set_option(
+-						stream, option, value, ptrparam);
++					/* GOPHPER: the socket's set_option puts listen()'s result in
++					 * xparam->outputs.returncode, and returns whether it ran. Assigning
++					 * the latter made a failed listen() (EADDRINUSE) look successful. */
++					if (php_stream_socket_ops.set_option(stream, option, value, ptrparam) != PHP_STREAM_OPTION_RETURN_OK) {
++						xparam->outputs.returncode = -1;
++					}
+ 
+ 					if (xparam->outputs.returncode == 0 && sslsock->enable_on_connect) {
+ 						/* Create SSL_CTX early to share it for session resumption and early data */
