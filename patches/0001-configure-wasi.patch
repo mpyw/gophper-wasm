@@ -1,0 +1,37 @@
+diff --git a/configure.ac b/configure.ac
+index 41bbb6a7..69337333 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1310,6 +1310,9 @@ AS_VAR_IF([php_cv_have_shadow_stack_syscall], [yes],
+   [fiber_asm_cflag="-DSHADOW_STACK_SYSCALL=1"],
+   [fiber_asm_cflag="-DSHADOW_STACK_SYSCALL=0"])
+ 
++dnl GOPHPER: WASI has neither boost asm nor ucontext.
++AS_CASE([$host_os], [wasi*], [fiber_asm='no'])
++
+ if test "$fiber_asm" = 'yes'; then
+   AC_MSG_CHECKING([for fiber switching context])
+   PHP_ADD_SOURCES([Zend/asm],
+@@ -1321,7 +1324,11 @@ else
+   AC_CHECK_HEADER([ucontext.h],
+     [AC_DEFINE([ZEND_FIBER_UCONTEXT], [1],
+       [Define to 1 if Zend fiber uses ucontext instead of boost context.])],
+-    [AC_MSG_FAILURE([fibers not available on this platform])])
++    dnl GOPHPER: build without fibers on WASI instead of failing.
++    [AS_CASE([$host_os],
++      [wasi*], [AC_DEFINE([ZEND_FIBER_UNSUPPORTED], [1],
++        [Define to 1 if the platform has no way to switch fiber contexts.])],
++      [AC_MSG_FAILURE([fibers not available on this platform])])])
+ fi
+ 
+ ZEND_INIT
+@@ -1444,7 +1451,8 @@ AC_ARG_VAR([PHP_UNAME],
+ AS_VAR_IF([PHP_UNAME],, [PHP_UNAME=$(uname -a | xargs)])
+ AC_DEFINE_UNQUOTED([PHP_UNAME], ["$PHP_UNAME"], [The 'uname -a' output.])
+ 
+-PHP_OS=$(uname | xargs)
++dnl GOPHPER: report the target OS, not the build machine, when cross compiling to WASI.
++AS_CASE([$host_os], [wasi*], [PHP_OS=WASI], [PHP_OS=$(uname | xargs)])
+ AC_DEFINE_UNQUOTED([PHP_OS], ["$PHP_OS"], [The 'uname' output.])
+ 
+ AC_ARG_VAR([PHP_BUILD_SYSTEM],
