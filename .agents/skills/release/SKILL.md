@@ -9,7 +9,7 @@ Only the `build` workflow releases. It builds and tests from scratch, makes an *
 
 ## Steps
 
-1. Push the sources to main. For now main is one commit: `git commit --amend` and `git push --force`.
+1. Push the sources to main.
 2. Pick the version. The workflow also publishes a GitHub release titled `vX.Y.Z (PHP x.y.z)`, a pre-release for a PHP alpha, beta or RC. Never reuse one that was pushed.
 
    | Change since the last release | Bump |
@@ -39,4 +39,5 @@ Only the `build` workflow releases. It builds and tests from scratch, makes an *
 | Checking that CI rebuilds the committed binaries byte for byte | bison, re2c and the host OS shape the output, and OpenSSL embeds the compiler path. CI being the only builder needs no such check. |
 | Committing the binaries to main on every push | Each source change added about 20 MB, and the repository reached 231 MB in 28 commits. A release tag carries them instead, on an orphan commit. |
 | Release tags on commits that main contains | A clone would still fetch every release's binaries through main's history. Orphan commits keep them out of branches. |
+| Keeping main one commit, with `git commit --amend` and `git push --force` | Each release links the main commit it was built from, in the tag's message and the release notes. A force-push drops that commit from main, and GitHub may delete it later, so the link breaks. |
 | Git LFS for the wasm binaries | `go get` and the module proxy fetch only the LFS pointer files, so `go:embed` would embed text. |

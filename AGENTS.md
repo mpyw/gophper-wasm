@@ -9,7 +9,7 @@ PHP compiled to wasm32-wasip1 for gophper. See README.md for the layout and ABI.
 - Prefer `compat/` over patching php-src. A missing POSIX symbol belongs in `compat/`.
 - `*.wasm.gz`, `ext/*.gz` and `version.go` are build outputs, ignored on branches. Only a release tag carries them, so the Go package builds only after `scripts/` ran.
 - Release only through the `build` workflow. Never tag by hand, and never move, delete or reuse a pushed tag. The module proxy and the checksum database keep every version forever.
-- For now main is one commit. Fold each change into it with `git commit --amend` and `git push --force`.
+- Commit to main as usual. Never force-push it: each release names the main commit it was built from.
 - Any change to ABI.md bumps `ABIVersion`, and gophper's `engineABIVersion` must follow.
 
 ## Skills
