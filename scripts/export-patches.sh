@@ -22,7 +22,6 @@ patch_name() {
     ext/openssl/xp_ssl.c) echo 0012-openssl-listen-failure ;;
     main/streams/xp_socket.c) echo 0013-listen-error-text ;;
     Zend/zend_execute.c) echo 0014-yield-to-the-go-scheduler ;;
-    main/fastcgi.c) echo 0015-fastcgi-shutdown-writes ;;
   esac
 }
 

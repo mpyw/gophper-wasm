@@ -1,6 +1,6 @@
 # Source this to get the wasi-sdk cross toolchain environment.
 # Versions are pinned here.
-PHP_TAG="php-8.6.0RC3"
+PHP_TAG="php-8.6.0RC4"
 WASI_SDK_VERSION="34.0"
 # clang runs wasm-opt from PATH after linking, so its version shapes the output.
 BINARYEN_VERSION="133"

@@ -123,7 +123,7 @@ Every version is pinned in `scripts/env.sh`. This table follows it.
 
 | Component | Version | In |
 | --- | --- | --- |
-| PHP (php-src) | 8.6.0RC3 | Both binaries |
+| PHP (php-src) | 8.6.0RC4 | Both binaries |
 | zlib | 1.3.2 | Both binaries |
 | libxml2 | 2.15.4 | Both binaries |
 | SQLite | 3.53.4 | Both binaries |
@@ -138,7 +138,7 @@ Every version is pinned in `scripts/env.sh`. This table follows it.
 | bzip2 | 1.0.8 | `bz2.so` |
 | GMP | 6.3.0 | `gmp.so` |
 | phpredis | 6.3.0 | `redis.so` |
-| Mozilla's CA certificates | 2026-09-25 | `ssl/cert.pem` |
+| Mozilla's CA certificates | 2026-10-20 | `ssl/cert.pem` |
 | wasi-sdk | 34.0 | The toolchain |
 | binaryen | 133 | The toolchain |
 
@@ -242,7 +242,6 @@ Two directories hold every difference from php-src.
 | `0012-openssl-listen-failure.patch` | Fixes `ssl://` and `tls://` servers, which took a failed `listen()` for success |
 | `0013-listen-error-text.patch` | A failed `listen()` says why. The host binds a TCP socket only when it listens. |
 | `0014-yield-to-the-go-scheduler.patch` | The interrupt check calls the host's `yield` every 65536 times. Go cannot preempt WebAssembly. |
-| `0015-fastcgi-shutdown-writes.patch` | php-cgi shuts the writing side with `SHUT_WR`, not with 1, which is `SHUT_RD` in WASI |
 
 ### compat/
 
