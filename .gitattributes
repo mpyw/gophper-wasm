@@ -1,0 +1,4 @@
+# Built by scripts/build.sh. Release tags carry them, so that using the package needs only Go.
+*.wasm.gz binary linguist-generated
+ext/*.so.gz binary linguist-generated
+version.go linguist-generated

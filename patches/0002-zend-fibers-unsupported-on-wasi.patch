@@ -1,0 +1,39 @@
+diff --git a/Zend/zend_fibers.c b/Zend/zend_fibers.c
+index f56d89a4..19ec049c 100644
+--- a/Zend/zend_fibers.c
++++ b/Zend/zend_fibers.c
+@@ -172,9 +172,22 @@ typedef struct {
+ } boost_context_data;
+ 
+ /* These functions are defined in assembler files provided by boost.context (located in "Zend/asm"). */
++#ifdef ZEND_FIBER_UNSUPPORTED /* GOPHPER: stubs for platforms without context switching */
++/* No context switching available (e.g. WASI). zend_fiber_init_context() always fails,
++ * so these are never reached. */
++static void *make_fcontext(void *sp, size_t size, void (*fn)(boost_context_data))
++{
++	abort();
++}
++static boost_context_data jump_fcontext(void *to, zend_fiber_transfer *transfer)
++{
++	abort();
++}
++#else
+ extern void *make_fcontext(void *sp, size_t size, void (*fn)(boost_context_data));
+ extern ZEND_INDIRECT_RETURN boost_context_data jump_fcontext(void *to, zend_fiber_transfer *transfer);
+ #endif
++#endif
+ 
+ ZEND_API zend_class_entry *zend_ce_fiber;
+ static zend_class_entry *zend_ce_fiber_error;
+@@ -416,6 +429,11 @@ ZEND_API bool zend_fiber_switch_blocked(void)
+ 
+ ZEND_API zend_result zend_fiber_init_context(zend_fiber_context *context, void *kind, zend_fiber_coroutine coroutine, size_t stack_size)
+ {
++#ifdef ZEND_FIBER_UNSUPPORTED /* GOPHPER: fibers are unavailable on WASI */
++	zend_throw_exception_ex(NULL, 0, "Fibers are not supported on this platform");
++	return FAILURE;
++#endif
++
+ 	context->stack = zend_fiber_stack_allocate(stack_size);
+ 
+ 	if (UNEXPECTED(!context->stack)) {

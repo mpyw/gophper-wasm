@@ -1,0 +1,30 @@
+diff --git a/ext/standard/config.m4 b/ext/standard/config.m4
+index 7edfcf1d..e5fc4c98 100644
+--- a/ext/standard/config.m4
++++ b/ext/standard/config.m4
+@@ -267,8 +267,9 @@ int main(void) {
+   AC_DEFINE([PHP_USE_PHP_CRYPT_R], [0])
+ ])
+ 
++dnl GOPHPER: wasi-libc has musl's fnmatch.
+ AS_VAR_IF([cross_compiling], [yes],
+-  [AS_CASE([$host_alias], [*linux*],
++  [AS_CASE([$host_alias], [*linux*|wasm32-wasi*],
+     [AC_DEFINE([HAVE_FNMATCH], [1])])],
+   [AC_FUNC_FNMATCH])
+ 
+@@ -328,6 +329,14 @@ dnl
+ 
+ PHP_CHECK_FUNC(res_search, resolv, socket)
+ 
++dnl GOPHPER: on WASI, gophper-wasm's compat/ has these, and configure sees
++dnl no compat/. PHP_CHECK_FUNC ignores cache variables.
++AS_CASE([$host_alias], [wasm32-wasi*], [
++  AC_DEFINE([HAVE_RES_SEARCH], [1])
++  AC_DEFINE([HAVE_DN_EXPAND], [1])
++  AC_DEFINE([HAVE_DN_SKIPNAME], [1])
++])
++
+ AC_CHECK_FUNCS([posix_spawn_file_actions_addchdir posix_spawn_file_actions_addchdir_np elf_aux_info])
+ 
+ dnl

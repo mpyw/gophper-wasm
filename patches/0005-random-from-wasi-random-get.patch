@@ -1,0 +1,26 @@
+diff --git a/ext/random/csprng.c b/ext/random/csprng.c
+index 4c474fb8..b158e3b0 100644
+--- a/ext/random/csprng.c
++++ b/ext/random/csprng.c
+@@ -21,6 +21,9 @@
+ #include <sys/stat.h>
+ #include <fcntl.h>
+ 
++#ifdef __wasi__ /* GOPHPER: random_get */
++# include <wasi/api.h>
++#endif
+ #include "php.h"
+ 
+ #include "Zend/zend_exceptions.h"
+@@ -72,6 +75,11 @@ ZEND_ATTRIBUTE_NONNULL PHPAPI zend_result php_random_bytes_ex(void *bytes, size_
+ 		snprintf(errstr, errstr_size, "Failed to retrieve randomness from the operating system (BCryptGenRandom)");
+ 		return FAILURE;
+ 	}
++#elif defined(__wasi__) /* GOPHPER: the host's CSPRNG, through WASI's random_get */
++	if (__wasi_random_get(bytes, size) != 0) {
++		snprintf(errstr, errstr_size, "Failed to retrieve randomness from the host (random_get)");
++		return FAILURE;
++	}
+ #elif defined(HAVE_COMMONCRYPTO_COMMONRANDOM_H)
+ 	/*
+ 	 * Purposely prioritized upon arc4random_buf for modern macOs releases

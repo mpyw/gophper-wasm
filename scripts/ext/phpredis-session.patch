@@ -1,0 +1,78 @@
+--- phpredis-6.3.0/redis_session.c	2025-11-07 04:52:58
++++ phpredis-6.3.0/redis_session.c	2026-10-09 21:05:29
+@@ -420,20 +420,22 @@
+  */
+ PS_OPEN_FUNC(redis)
+ {
++    /* GOPHPER: PHP 8.6 passes session.save_path as a zend_string. */
++    const char *save_path_c = ZSTR_VAL(save_path);
+     php_url *url;
+     zval params, context, *zv;
+     int i, j, path_len;
+ 
+     redis_pool *pool = ecalloc(1, sizeof(*pool));
+ 
+-    for (i = 0, j = 0, path_len = strlen(save_path); i < path_len; i = j + 1) {
++    for (i = 0, j = 0, path_len = strlen(save_path_c); i < path_len; i = j + 1) {
+         /* find beginning of url */
+-        while ( i< path_len && (isspace(save_path[i]) || save_path[i] == ','))
++        while ( i< path_len && (isspace(save_path_c[i]) || save_path_c[i] == ','))
+             i++;
+ 
+         /* find end of url */
+         j = i;
+-        while (j<path_len && !isspace(save_path[j]) && save_path[j] != ',')
++        while (j<path_len && !isspace(save_path_c[j]) && save_path_c[j] != ',')
+             j++;
+ 
+         if (i < j) {
+@@ -445,18 +447,18 @@
+             zend_string *user = NULL, *pass = NULL;
+ 
+             /* translate unix: into file: */
+-            if (!redis_strncmp(save_path+i, ZEND_STRL("unix:"))) {
++            if (!redis_strncmp(save_path_c+i, ZEND_STRL("unix:"))) {
+                 int len = j-i;
+-                char *path = estrndup(save_path+i, len);
++                char *path = estrndup(save_path_c+i, len);
+                 memcpy(path, "file:", sizeof("file:")-1);
+                 url = php_url_parse_ex(path, len);
+                 efree(path);
+             } else {
+-                url = php_url_parse_ex(save_path+i, j-i);
++                url = php_url_parse_ex(save_path_c+i, j-i);
+             }
+ 
+             if (!url) {
+-                char *path = estrndup(save_path+i, j-i);
++                char *path = estrndup(save_path_c+i, j-i);
+                 php_error_docref(NULL, E_WARNING,
+                     "Failed to parse session.save_path (error at offset %d, url was '%s')", i, path);
+                 efree(path);
+@@ -498,7 +500,7 @@
+             }
+ 
+             if ((url->path == NULL && url->host == NULL) || weight <= 0 || timeout <= 0) {
+-                char *path = estrndup(save_path+i, j-i);
++                char *path = estrndup(save_path_c+i, j-i);
+                 php_error_docref(NULL, E_WARNING,
+                     "Failed to parse session.save_path (error at offset %d, url was '%s')", i, path);
+                 efree(path);
+@@ -946,6 +948,8 @@
+ }
+ 
+ PS_OPEN_FUNC(rediscluster) {
++    /* GOPHPER: PHP 8.6 passes session.save_path as a zend_string. */
++    const char *save_path_c = ZSTR_VAL(save_path);
+     redisCluster *c;
+     zval z_conf, *zv, *context;
+     HashTable *ht_conf, *ht_seeds;
+@@ -955,7 +959,7 @@
+ 
+     /* Parse configuration for session handler */
+     array_init(&z_conf);
+-    sapi_module.treat_data(PARSE_STRING, estrdup(save_path), &z_conf);
++    sapi_module.treat_data(PARSE_STRING, estrdup(save_path_c), &z_conf);
+ 
+     /* We need seeds */
+     zv = REDIS_HASH_STR_FIND_TYPE_STATIC(Z_ARRVAL(z_conf), "seed", IS_ARRAY);

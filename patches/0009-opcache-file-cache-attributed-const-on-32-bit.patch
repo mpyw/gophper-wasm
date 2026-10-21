@@ -1,0 +1,22 @@
+diff --git a/ext/opcache/zend_file_cache.c b/ext/opcache/zend_file_cache.c
+index 0b6cabe4..7ead34de 100644
+--- a/ext/opcache/zend_file_cache.c
++++ b/ext/opcache/zend_file_cache.c
+@@ -569,7 +569,17 @@ static void zend_file_cache_serialize_op_array(zend_op_array            *op_arra
+ 			if (opline->opcode == ZEND_OP_DATA
+ 				&& (opline-1)->opcode == ZEND_DECLARE_ATTRIBUTED_CONST
+ 			) {
++#if ZEND_USE_ABS_CONST_ADDR
++				/* GOPHPER: on 32-bit targets such as wasm32, op1.zv is still an
++				 * absolute address into script->mem here. Following it would
++				 * change the original, and leave a raw pointer in buf, which a
++				 * later process loads as an offset. Use the copy in buf. */
++				zval *literal = opline->op1.zv;
++				SERIALIZE_PTR(literal);
++				UNSERIALIZE_PTR(literal);
++#else
+ 				zval *literal = RT_CONSTANT(opline, opline->op1);
++#endif
+ 				SERIALIZE_ATTRIBUTES(Z_PTR_P(literal));
+ 			}
+ 

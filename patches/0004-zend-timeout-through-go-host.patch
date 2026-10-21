@@ -1,0 +1,41 @@
+diff --git a/Zend/zend_execute_API.c b/Zend/zend_execute_API.c
+index 3160bc0e..fad39321 100644
+--- a/Zend/zend_execute_API.c
++++ b/Zend/zend_execute_API.c
+@@ -1473,6 +1473,13 @@ ZEND_API zend_result zend_eval_string_ex(const char *str, zval *retval_ptr, cons
+ 
+ static void zend_set_timeout_ex(zend_long seconds, bool reset_signals);
+ 
++#ifdef __wasi__
++/* GOPHPER: WASI has no timers or signals. The Go host runs the timer and,
++ * when it fires, does what zend_timeout_handler() does. 0 cancels it. */
++__attribute__((import_module("gophper"), import_name("set_timeout")))
++extern void gophper_set_timeout(int32_t seconds);
++#endif
++
+ ZEND_API ZEND_NORETURN void ZEND_FASTCALL zend_timeout(void) /* {{{ */
+ {
+ #if defined(PHP_WIN32)
+@@ -1630,6 +1637,11 @@ static void zend_set_timeout_ex(zend_long seconds, bool reset_signals) /* {{{ */
+ 		tq_timer = NULL;
+ 		zend_error_noreturn(E_ERROR, "Could not queue new timer");
+ 	}
++#elif defined(__wasi__) /* GOPHPER: the timer runs in the Go host */
++	(void) reset_signals;
++	if (seconds > 0) {
++		gophper_set_timeout(seconds > INT32_MAX ? INT32_MAX : (int32_t) seconds);
++	}
+ #elif defined(ZEND_MAX_EXECUTION_TIMERS)
+ 	if (seconds > 0) {
+ 		zend_max_execution_timer_settime(seconds);
+@@ -1718,6 +1730,10 @@ void zend_unset_timeout(void) /* {{{ */
+ 		}
+ 		tq_timer = NULL;
+ 	}
++#elif defined(__wasi__) /* GOPHPER: the timer runs in the Go host */
++	if (EG(timeout_seconds)) {
++		gophper_set_timeout(0);
++	}
+ #elif defined(ZEND_MAX_EXECUTION_TIMERS)
+ 	if (EG(timeout_seconds)) {
+ 		zend_max_execution_timer_settime(0);
