@@ -1,0 +1,21 @@
+diff --git a/Zend/zend.c b/Zend/zend.c
+index 3cfc0ffd..e1fb85f2 100644
+--- a/Zend/zend.c
++++ b/Zend/zend.c
+@@ -974,7 +974,16 @@ void zend_startup(zend_utility_functions *utility_functions) /* {{{ */
+ 	zend_getenv = utility_functions->getenv_function;
+ 	zend_resolve_path = utility_functions->resolve_path_function;
+ 
++#ifdef __wasi__
++	/* GOPHPER: the Go host delivers signals by interrupting the VM.
++	 * gophper-wasm's compat/gophper_signal.c raises them here. */
++	{
++		extern void gophper_signal_interrupt(zend_execute_data *execute_data);
++		zend_interrupt_function = gophper_signal_interrupt;
++	}
++#else
+ 	zend_interrupt_function = NULL;
++#endif
+ 
+ #ifdef HAVE_DTRACE
+ /* build with dtrace support */

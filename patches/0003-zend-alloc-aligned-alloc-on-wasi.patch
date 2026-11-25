@@ -1,0 +1,58 @@
+diff --git a/Zend/zend_alloc.c b/Zend/zend_alloc.c
+index 4fc8926c..26d6b61b 100644
+--- a/Zend/zend_alloc.c
++++ b/Zend/zend_alloc.c
+@@ -443,7 +443,9 @@ static void stderr_last_error(char *msg)
+ 
+ static void zend_mm_munmap(void *addr, size_t size)
+ {
+-#ifdef _WIN32
++#ifdef __wasi__ /* GOPHPER: zend_mm_mmap() uses aligned_alloc() on WASI */
++	free(addr);
++#elif defined(_WIN32)
+ 	if (VirtualFree(addr, 0, MEM_RELEASE) == 0) {
+ 		/** ERROR_INVALID_ADDRESS is expected when addr is not range start address */
+ 		if (GetLastError() != ERROR_INVALID_ADDRESS) {
+@@ -481,7 +483,9 @@ static void zend_mm_munmap(void *addr, size_t size)
+ #ifndef HAVE_MREMAP
+ static void *zend_mm_mmap_fixed(void *addr, size_t size)
+ {
+-#ifdef _WIN32
++#ifdef __wasi__ /* GOPHPER: no address hints with aligned_alloc() */
++	return NULL;
++#elif defined(_WIN32)
+ 	void *ptr = VirtualAlloc(addr, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+ 
+ 	if (ptr == NULL) {
+@@ -522,7 +526,21 @@ static void *zend_mm_mmap_fixed(void *addr, size_t size)
+ 
+ static void *zend_mm_mmap(size_t size)
+ {
+-#ifdef _WIN32
++#ifdef __wasi__
++	/* GOPHPER: wasi-emulated-mman can neither align nor partially unmap, which
++	 * zend_mm_chunk_alloc_int() needs. Allocate chunk-aligned memory from the
++	 * libc heap instead, so the alignment fix-up path is never taken. */
++	void *ptr = aligned_alloc(ZEND_MM_CHUNK_SIZE, size);
++
++	if (ptr == NULL) {
++#if ZEND_MM_ERROR
++		fprintf(stderr, "\naligned_alloc() failed: [%d] %s\n", errno, strerror(errno));
++#endif
++		return NULL;
++	}
++	memset(ptr, 0, size); /* mmap(MAP_ANON) returns zeroed pages */
++	return ptr;
++#elif defined(_WIN32)
+ 	void *ptr = VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+ 
+ 	if (ptr == NULL) {
+@@ -833,7 +851,7 @@ static int zend_mm_chunk_truncate(zend_mm_heap *heap, void *addr, size_t old_siz
+ 		}
+ 	}
+ #endif
+-#ifndef _WIN32
++#if !defined(_WIN32) && !defined(__wasi__) /* GOPHPER: cannot shrink an aligned_alloc() block */
+ 	zend_mm_munmap((char*)addr + new_size, old_size - new_size);
+ 	return 1;
+ #else

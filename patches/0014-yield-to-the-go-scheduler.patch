@@ -1,0 +1,52 @@
+diff --git a/Zend/zend_execute.c b/Zend/zend_execute.c
+index a5f9d1e8..7460d4d0 100644
+--- a/Zend/zend_execute.c
++++ b/Zend/zend_execute.c
+@@ -4352,12 +4352,31 @@ ZEND_API ZEND_COLD void ZEND_FASTCALL zend_fcall_interrupt(zend_execute_data *ca
+ 	}
+ }
+ 
++#ifdef __wasi__
++/* GOPHPER: the Go runtime never preempts wazero's machine code. A loop that
++ * calls nothing else held off Go's stop-the-world GC, and with it the timer
++ * whose interrupt would end the loop, so the whole process hung. Calling
++ * the host every so often lets Go preempt the instance's goroutine. */
++__attribute__((import_module("gophper"), import_name("yield"))) void gophper_host_yield(void);
++static uint32_t gophper_yield_countdown = 1 << 16;
++# define GOPHPER_VM_YIELD() do { \
++		if (UNEXPECTED(--gophper_yield_countdown == 0)) { \
++			gophper_yield_countdown = 1 << 16; \
++			gophper_host_yield(); \
++		} \
++	} while (0)
++#else
++# define GOPHPER_VM_YIELD()
++#endif
++
+ #define ZEND_VM_INTERRUPT_CHECK() do { \
++		GOPHPER_VM_YIELD(); \
+ 		if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) { \
+ 			ZEND_VM_INTERRUPT(); \
+ 		} \
+ 	} while (0)
+ 
++
+ #if ZEND_VM_KIND == ZEND_VM_KIND_TAILCALL
+ # define ZEND_VM_KIND_TAILCALL_SAVE_OPLINE() SAVE_OPLINE()
+ #else
+@@ -4365,6 +4384,7 @@ ZEND_API ZEND_COLD void ZEND_FASTCALL zend_fcall_interrupt(zend_execute_data *ca
+ #endif
+ 
+ #define ZEND_VM_LOOP_INTERRUPT_CHECK() do { \
++		GOPHPER_VM_YIELD(); \
+ 		if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) { \
+ 			ZEND_VM_KIND_TAILCALL_SAVE_OPLINE(); \
+ 			ZEND_VM_LOOP_INTERRUPT(); \
+@@ -4372,6 +4392,7 @@ ZEND_API ZEND_COLD void ZEND_FASTCALL zend_fcall_interrupt(zend_execute_data *ca
+ 	} while (0)
+ 
+ #define ZEND_VM_FCALL_INTERRUPT_CHECK(call) do { \
++		GOPHPER_VM_YIELD(); \
+ 		if (UNEXPECTED(zend_atomic_bool_load_ex(&EG(vm_interrupt)))) { \
+ 			zend_fcall_interrupt(call); \
+ 		} \
