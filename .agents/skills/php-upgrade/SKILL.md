@@ -27,7 +27,6 @@ description: Move gophper-wasm to a new php-src release, such as 8.6.0RC3 to 8.6
    | --- | --- |
    | `php-src/config.log` | `error parsing wasm`. A configure test that wasm-opt cannot parse looks like a missing function. |
    | `scripts/ext/phpredis.h`, `scripts/ext/phpredis-session.patch` | APIs PHP removed or changed. phpredis lags behind new PHP releases. |
-   | `patches/0009` | opcache's file cache, which changes between releases |
    | `ext/opcache/zend_shared_alloc.c` (`patches/0011`) | Whether opcache still creates its lock file there |
    | `ext/openssl/xp_ssl.c` (`patches/0012`) | Whether php-src fixed the `STREAM_XPORT_OP_LISTEN` return code itself. Then drop the patch. |
    | `UPGRADING` and `UPGRADING.INTERNALS` in php-src | New functions that need compat, or changed SAPI behavior |
