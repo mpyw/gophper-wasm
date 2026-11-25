@@ -16,7 +16,6 @@ patch_name() {
     ext/standard/microtime.c) echo 0006-getrusage-fields-on-wasi ;;
     ext/standard/config.m4) echo 0007-standard-functions-on-wasi ;;
     Zend/zend.c) echo 0008-zend-signals-through-go-host ;;
-    ext/opcache/zend_file_cache.c) echo 0009-opcache-file-cache-attributed-const-on-32-bit ;;
     main/main.c) echo 0010-functions-from-go-host ;;
     ext/opcache/zend_shared_alloc.c) echo 0011-opcache-lock-file-on-wasi ;;
     ext/openssl/xp_ssl.c) echo 0012-openssl-listen-failure ;;

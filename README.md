@@ -123,7 +123,7 @@ Every version is pinned in `scripts/env.sh`. This table follows it.
 
 | Component | Version | In |
 | --- | --- | --- |
-| PHP (php-src) | 8.6.0RC4 | Both binaries |
+| PHP (php-src) | 8.6.0 | Both binaries |
 | zlib | 1.3.2 | Both binaries |
 | libxml2 | 2.15.4 | Both binaries |
 | SQLite | 3.53.4 | Both binaries |
@@ -236,7 +236,6 @@ Two directories hold every difference from php-src.
 | `0006-getrusage-fields-on-wasi.patch` | `getrusage()` reports only the CPU times, as WASI's `struct rusage` has no more |
 | `0007-standard-functions-on-wasi.patch` | configure enables `fnmatch()` and the DNS functions, which wasi-libc or compat/ have |
 | `0008-zend-signals-through-go-host.patch` | Zend's interrupt check takes the signals the host marked pending |
-| `0009-opcache-file-cache-attributed-const-on-32-bit.patch` | Fixes opcache's file cache for attributes on constants, which kept a raw pointer on 32-bit targets |
 | `0010-functions-from-go-host.patch` | Registers the PHP functions the host writes in Go, after the extensions start |
 | `0011-opcache-lock-file-on-wasi.patch` | opcache's lock file takes no record locks. WASI has none, and the shared memory never leaves the instance. |
 | `0012-openssl-listen-failure.patch` | Fixes `ssl://` and `tls://` servers, which took a failed `listen()` for success |
